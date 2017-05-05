@@ -19,6 +19,7 @@ module.exports.index = (event, context, callback) => {
   }
 
   const imgKey = event.pathParameters.img;
+  const processedKey = `processed/${hash.MD5(event.queryStringParameters)}-${imgKey}`;
   const headParams = {
     Bucket: process.env.S3_BUCKET,
     Key: `originals/${imgKey}`,
@@ -56,7 +57,6 @@ module.exports.index = (event, context, callback) => {
         if (err) {
           handleError(err);
         } else {
-          const processedKey = `processed/${hash.MD5(event.queryStringParameters)}-${imgKey}`;
           const putParams = {
             Bucket: process.env.S3_BUCKET,
             Key: processedKey,
@@ -68,9 +68,10 @@ module.exports.index = (event, context, callback) => {
           };
           s3.putObject(putParams).promise().then(() => {
             const response = {
-              statusCode: 302,
+              statusCode: 301,
               headers: {
                 Location: `https://s3.amazonaws.com/${process.env.S3_BUCKET}/${processedKey}`,
+                'Cache-Control': 'public, max-age=31536000',
               },
             };
             callback(null, response);
