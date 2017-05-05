@@ -6,7 +6,7 @@ provider:
   memorySize: 1536
 
   stage: production
-  region: us-east-1
+  region: us-east-1 # Update to whatever region you would like
 
   iamRoleStatements:
     - Effect: "Allow"
@@ -27,7 +27,7 @@ provider:
         - "s3:ListBucket"
         - "s3:PutObject"
         - "s3:PutObjectAcl"
-      Resource: arn:aws:s3:::img.vidhub.co/*
+      Resource: arn:aws:s3:::img.vidhub.co/* # the bucket ARN to store images in
 
 functions:
   index:
@@ -37,7 +37,7 @@ functions:
           path: /{img}
           method: get
     environment:
-      S3_BUCKET: img.vidhub.co
+      S3_BUCKET: img.vidhub.co # bucket name to store images
 
 resources:
   Resources:
@@ -46,7 +46,7 @@ resources:
       Properties:
         DistributionConfig:
           Aliases:
-              - img.vidhub.co
+              - img.vidhub.co # DNS to replace CloudFront's
           Origins:
               - DomainName: { "Fn::Join": [ ".", [ { "Ref": "ApiGatewayRestApi" }, "execute-api", "us-east-1", "amazonaws.com" ] ] }
                 OriginPath: /production
@@ -75,9 +75,9 @@ resources:
                 Forward: none
               QueryString: true
           Enabled: true
-          Comment: Vidhub Img 
+          Comment: Vidhub Img  # Can be whatever
           DefaultRootObject: index.html
           ViewerCertificate:
-            AcmCertificateArn: 	arn:aws:acm:us-east-1:563115270151:certificate/826e8b5b-3ace-4fdf-83be-330a66a27ee7
+            AcmCertificateArn: arn:aws:acm:us-east-1:563115270151:certificate/826e8b5b-3ace-4fdf-83be-330a66a27ee7 # A certificate in ACM for the DNS being used
             SslSupportMethod: sni-only
           PriceClass: PriceClass_100
