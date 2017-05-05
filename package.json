@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "jimp": "^0.2.27",
+    "object-hash": "^1.1.8"
+  }
+}

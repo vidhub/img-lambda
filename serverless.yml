@@ -1,0 +1,95 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: vidhub-img # NOTE: update this with your service name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+
+  stage: production
+  region: us-east-1
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:ListBucket"
+      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+    - Effect: "Allow"
+      Action:
+        - "s3:PutObject"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - "Ref" : "ServerlessDeploymentBucket"
+            - "/*"
+    - Effect: "Allow"
+      Action:
+        - "s3:ListBucket"
+        - "s3:PutObject"
+        - "s3:PutObjectAcl"
+      Resource: arn:aws:s3:::img.vidhub.co/*
+
+functions:
+  index:
+    handler: handler.index
+    events:
+      - http:
+          path: /{img}
+          method: get
+    environment:
+      S3_BUCKET: img.vidhub.co
+
+resources:
+  Resources:
+    CloudFrontDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Aliases:
+              - img.vidhub.co
+          Origins:
+              - DomainName: { "Fn::Join": [ ".", [ { "Ref": "ApiGatewayRestApi" }, "execute-api", "us-east-1", "amazonaws.com" ] ] }
+                OriginPath: /production
+                Id: vidhub-img
+                CustomOriginConfig:
+                  HTTPPort: 80
+                  HTTPSPort: 443
+                  OriginProtocolPolicy: https-only
+          DefaultCacheBehavior:
+            AllowedMethods:
+              - DELETE
+              - GET
+              - HEAD
+              - OPTIONS
+              - PATCH
+              - POST
+              - PUT
+            TargetOriginId: vidhub-img
+            ViewerProtocolPolicy: redirect-to-https
+            ForwardedValues:
+              Cookies:
+                Forward: none
+              QueryString: true
+          Enabled: true
+          Comment: Vidhub Img 
+          DefaultRootObject: index.html
+          ViewerCertificate:
+            AcmCertificateArn: 	arn:aws:acm:us-east-1:563115270151:certificate/826e8b5b-3ace-4fdf-83be-330a66a27ee7
+            SslSupportMethod: sni-only
+          PriceClass: PriceClass_100
