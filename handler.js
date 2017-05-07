@@ -28,7 +28,7 @@ module.exports.index = (event, context, callback) => {
   const processedPublicUrl = `https://s3.amazonaws.com/${process.env.S3_BUCKET}/${processedKey}`;
 
   // Check if an original object exists
-  s3.headObject({ Key: originalKey }).promise().then(headData => {
+  s3.headObject({ Key: originalKey }).promise().then(() => {
     // Check if we have the processed version already
     s3.headObject({ Key: processedKey }).promise().then(() => {
       const response = {
@@ -58,6 +58,20 @@ module.exports.index = (event, context, callback) => {
           'flip',
           'mirror',
           'rotate',
+          'brightness',
+          'contrast',
+          'dither565',
+          'greyscale',
+          'invert',
+          'normalize',
+          'fade',
+          'opacity',
+          'opaque',
+          'background',
+          'gaussian',
+          'blur',
+          'posterize',
+          'sepia',
         ];
         
         // Apply transforms to the img object
@@ -67,6 +81,11 @@ module.exports.index = (event, context, callback) => {
               const num = Number(val);
               if (Number.isFinite(num)) {
                 return num;
+              } else {
+                const normalizedName = val.toUpperCase();
+                if (Jimp[normalizedName]) {
+                  return Jimp[normalizedName];
+                }
               }
               return val;
             });
@@ -75,7 +94,7 @@ module.exports.index = (event, context, callback) => {
         });
 
         // Get the buffer data for the new image
-        img.getBuffer(headData.ContentType, (err, data) => {
+        img.getBuffer(img.getMIME(), (err, data) => {
           if (err) {
             handleError(err);
           } else {
@@ -84,7 +103,7 @@ module.exports.index = (event, context, callback) => {
               ACL: 'public-read',
               Body: data,
               ContentLength: data.length,
-              ContentType: headData.ContentType,
+              ContentType: img.getMIME(),
               CacheControl: 'public, max-age=31536000',
             };
             // Upload new image data to S3
